@@ -12,8 +12,11 @@ namespace CoolTip
 {
     [ProvideProperty("TipText", typeof(Control))]
     [ProvideProperty("HelpText", typeof(Control))]
+    [ProvideProperty("ShowLongItemTips", typeof(ListBox))]
+    [ProvideProperty("ShowItemTips", typeof(ListView))]
     //[ToolboxItemFilter("System.Windows.Forms")]
     [DesignerCategory("CoolTip")]
+    [ToolboxBitmap(typeof(ToolTip))]
     public class CoolTip : Component, IExtenderProvider, IMessageFilter
     {
         private class TipNativeWindow : NativeWindow
@@ -50,7 +53,7 @@ namespace CoolTip
         private bool _isDisposing;
 
         private object _currentTarget;
-        private object _hoverTarget;
+        private object _futureTarget;
         private object _manualTarget;
         private object _lastTarget;
 
@@ -58,14 +61,21 @@ namespace CoolTip
         private RenderTipInfo _renderInfo;
         private DateTime _lastShowed;
 
+        private HashSet<ListBox> _listBoxes;
+        private HashSet<ListView> _listViews;
+
         private Dictionary<Type, IManager> _managers;
         private ManagerControl _managerControl;
         private ManagerToolStripItem _managerToolStripItem;
+        private ManagerListBoxItem _managerListBox;
+        private ManagerListViewItem _managerListView;
 
         private Dictionary<Type, IVisitor> _visitors;
         private VisitorControl _visitorControl;
         private VisitorToolStrip _visitorToolStrip;
         private VisitorStatusStrip _visitorStatusStrip;
+        private VisitorListBox _visitorListBox;
+        private VisitorListView _visitorListView;
 
         public CoolTip(IContainer container)
             : this()
@@ -97,20 +107,33 @@ namespace CoolTip
             _managers = new Dictionary<Type, IManager>();
             _visitors = new Dictionary<Type, IVisitor>();
 
+            _listBoxes = new HashSet<ListBox>();
+            _listViews = new HashSet<ListView>();
+
             _managerControl = new ManagerControl();
             _managerToolStripItem = new ManagerToolStripItem();
+            _managerListBox = new ManagerListBoxItem();
+            _managerListView = new ManagerListViewItem();
 
             _managers.Add(typeof(Control), _managerControl);
             _managers.Add(typeof(ToolStripItem), _managerToolStripItem);
+            _managers.Add(typeof(ListBoxItem), _managerListBox);
+            _managers.Add(typeof(ListViewItem), _managerListView);
 
             _visitorControl = new VisitorControl();
             _visitorToolStrip = new VisitorToolStrip();
             _visitorStatusStrip = new VisitorStatusStrip();
+            _visitorListBox = new VisitorListBox();
+            _visitorListView = new VisitorListView();
+
             _visitors.Add(typeof(SplitContainer), _visitorControl);
             _visitors.Add(typeof(SplitterPanel), _visitorControl);
             _visitors.Add(typeof(Panel), _visitorControl);
+            _visitors.Add(typeof(GroupBox), _visitorControl);
             _visitors.Add(typeof(ToolStrip), _visitorToolStrip);
             _visitors.Add(typeof(StatusStrip), _visitorStatusStrip);
+            _visitors.Add(typeof(ListBox), _visitorListBox);
+            _visitors.Add(typeof(ListView), _visitorListView);
 
             _window = new TipNativeWindow(this);
         }
@@ -224,13 +247,13 @@ namespace CoolTip
         }
 
         // Arial, 9pt, style=Bold
-        [DefaultValue(typeof(Font), "Microsoft Sans Serif; 8,25pt")]
+        [DefaultValue(typeof(Font), "Microsoft Sans Serif, 8.25pt")]
         public Font Font { get; set; }
-             
-        [DefaultValue(KnownColor.Window)]
+
+        [DefaultValue(typeof(Color), "Window")]
         public Color BackColor { get; set; }
 
-        [DefaultValue(KnownColor.ControlText)]
+        [DefaultValue(typeof(Color), "ControlText")]
         public Color ForeColor { get; set; }
 
         [DefaultValue(1000)]
@@ -242,22 +265,22 @@ namespace CoolTip
         [DefaultValue(100)]
         public int ReshowDelay { get; set; }
 
-        [DefaultValue(typeof(Padding), "0; 2; 0; 2")]
+        [DefaultValue(typeof(Padding), "0, 2, 0, 2")]
         public Padding Marging { get; set; }
-        
-        [DefaultValue(typeof(Padding), "2; 2; 2; 2")]
+
+        [DefaultValue(typeof(Padding), "2, 2, 2, 2")]
         public Padding Padding { get; set; }
 
-        [DefaultValue(typeof(Size), "12; 12")]
+        [DefaultValue(typeof(Size), "12, 12")]
         public Size IconSize { get; set; }
 
-        [DefaultValue(typeof(Padding), "2; 3; 2; 2")]
+        [DefaultValue(typeof(Padding), "2, 3, 2, 2")]
         public Padding IconMarging { get; set; }
 
         [DefaultValue(1)]
         public int BorderWidth { get; set; }
 
-        [DefaultValue(KnownColor.ActiveBorder)]
+        [DefaultValue(typeof(Color), "ActiveBorder")]
         public Color BorderColor { get; set; }
 
         [Browsable(true)]
@@ -347,7 +370,7 @@ namespace CoolTip
             }
         }
 
-        
+
         private void ResetHint(object sender, EventArgs e)
         {
             StopTimerShow();
@@ -364,7 +387,8 @@ namespace CoolTip
 
         public bool CanExtend(object target)
         {
-            return (target is Control) && !(target is CoolTip);
+            return !(target is CoolTip)
+                && ((target is Control) || (target is ListBox) || (target is ListView));
         }
 
         public void AddInfo<TComponent>(
@@ -402,6 +426,12 @@ namespace CoolTip
             object target = _baseForm.GetChildAtPoint(location);
             while ((target != null) && _visitors.Keys.Contains(target.GetType()))
             {
+                if ((target is ListBox) && !_listBoxes.Contains(target))
+                    break;
+
+                if ((target is ListView) && !_listViews.Contains(target))
+                    break;
+
                 var visitor = _visitors[target.GetType()];
                 object newTarget = visitor.GetItem(target, Cursor.Position);
 
@@ -421,32 +451,44 @@ namespace CoolTip
 
             if (m.Msg == Native.WM_MOUSEMOVE)
             {
-                //Console.WriteLine(m);
-                //Console.WriteLine(_baseForm);
+                //Debug.WriteLine("{0} {1}", DateTime.Now, m);
 
                 var target = FindCurrentTarget();
-                if ((target != _hoverTarget) && (target != null))
+                //Debug.WriteLine("target: {0}", target);
+                //Debug.WriteLine("current: {0}", _currentTarget);
+                //Debug.WriteLine("future: {0}", _futureTarget);
+                //Debug.WriteLine("last: {0}", _lastTarget);
+
+                if ((target != null)
+                    && !target.Equals(_futureTarget)
+                    && !target.Equals(_lastTarget)
+                    && !target.Equals(_currentTarget)
+                    && !target.Equals(_manualTarget))
                 {
                     // stop previous show-by-timer
                     StopTimerShow();
                     // start new show-by-timer
                     ShowByTimer(target, ShowDelay);
                 }
-                if ((target != _lastTarget) && (DateTime.Now > _lastShowed.AddMilliseconds(ReshowDelay)))
+                if (((target == null) || !target.Equals(_lastTarget))
+                    && (DateTime.Now > _lastShowed.AddMilliseconds(ReshowDelay))
+                    && (_lastTarget != null))
                 {
                     // reset last showed only after delay
                     _lastTarget = null;
                 }
                 if ((target != null) && (_manualTarget == null))
                 {
-                    if ((target != _currentTarget) && (_currentTarget != null))
+                    if (!target.Equals(_currentTarget)
+                        && (_currentTarget != null))
                     {
                         // hide previous
                         DoHide();
                         // show new without additional delay
                         DoShow(target);
                     }
-                    else if ((target != _lastTarget) && (_lastTarget != null))
+                    else if (!target.Equals(_lastTarget)
+                        && (_lastTarget != null))
                     {
                         // reshow new without additional delay
                         DoShow(target);
@@ -531,6 +573,34 @@ namespace CoolTip
             return _managerControl.GetHelp(control);
         }
 
+        [DefaultValue(false)]
+        public bool GetShowLongItemTips(ListBox listBox)
+        {
+            return _listBoxes.Contains(listBox);
+        }
+
+        public void SetShowLongItemTips(ListBox listBox, bool value)
+        {
+            if (value)
+                _listBoxes.Add(listBox);
+            else
+                _listBoxes.Remove(listBox);
+        }
+
+        [DefaultValue(false)]
+        public bool GetShowItemTips(ListView listView)
+        {
+            return _listViews.Contains(listView);
+        }
+
+        public void SetShowItemTips(ListView listView, bool value)
+        {
+            if (value)
+                _listViews.Add(listView);
+            else
+                _listViews.Remove(listView);
+        }
+
         public void Show(object target, Icon icon, int? delay, string text)
         {
             var manager = GetManager(target);
@@ -543,6 +613,19 @@ namespace CoolTip
             _renderInfo = new RenderTipInfo(icon, text, delay);
             DoShow(target, manager);
             HideByTimer(target, delay ?? HideDelay);
+        }
+
+        public bool Validate(object target, bool expression, string text, int? delay = null)
+        {
+            if (expression == false)
+            {
+                Show(target, Icon.Warning, delay, text);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         public void Hide()
@@ -559,6 +642,7 @@ namespace CoolTip
             string text = _managerControl.GetHelp(sender);
             _renderInfo = new RenderTipInfo(Icon.Information, text, 0);
             DoShow(sender, _managerControl);
+            e.Handled = true;
         }
 
         internal bool IsHandleCreated()
@@ -588,7 +672,8 @@ namespace CoolTip
                 var handle = new HandleRef(this, Handle);
                 Native.ShowWindow(handle, Native.SW_HIDE);
                 StopTimerHide();
-                _lastTarget = _currentTarget;
+                if (_manualTarget == null)
+                    _lastTarget = _currentTarget;
                 _currentTarget = null;
                 _renderInfo = null;
                 _manualTarget = null;
@@ -626,11 +711,12 @@ namespace CoolTip
         {
             if (_timerShow == null)
             {
-                _hoverTarget = target;
+                _futureTarget = target;
                 _timerShow = new TipTimer(target);
                 _timerShow.Tick += TimerShowHandler;
                 _timerShow.Interval = interval;
                 _timerShow.Start();
+                //Debug.WriteLine("timer start");
             }
         }
 
@@ -641,13 +727,15 @@ namespace CoolTip
                 _timerShow.Stop();
                 _timerShow.Dispose();
                 _timerShow = null;
+                _futureTarget = null;
+                //Debug.WriteLine("timer stop");
             }
         }
 
         private void TimerShowHandler(object source, EventArgs args)
         {
             var timer = source as TipTimer;
-            if (_baseForm.Bounds.Contains(Cursor.Position))
+            if ((_manualTarget == null) && _baseForm.Bounds.Contains(Cursor.Position))
                 DoShow(timer.Target);
         }
 
@@ -789,7 +877,6 @@ namespace CoolTip
 
         private void WndProc(ref Message msg)
         {
-            //Console.WriteLine(msg.ToString());
             switch (msg.Msg)
             {
                 case Native.WM_PRINTCLIENT:

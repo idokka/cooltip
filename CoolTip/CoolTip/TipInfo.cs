@@ -24,20 +24,24 @@ namespace CoolTip
 
         private Icon GetIconKind(ref string text)
         {
-            var icon = GetIconKind(text[0]);
+            var icon = GetIconKind(text);
             if (icon != Icon.Arrow)
                 text = text.Substring(1);
             return icon;
         }
 
-        private static Icon GetIconKind(char symbol)
+        private static Icon GetIconKind(string text)
         {
-            switch (symbol)
+            if (text.StartsWith("i)"))
+                return Icon.Information;
+            else
             {
-                case '!': return Icon.Warning;
-                case '?': return Icon.Question;
-                case 'i': return Icon.Information;
-                default: return Icon.Arrow;
+                switch (text[0])
+                {
+                    case '!': return Icon.Warning;
+                    case '?': return Icon.Question;
+                    default: return Icon.Arrow;
+                }
             }
         }
     }

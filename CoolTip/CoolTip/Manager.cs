@@ -114,6 +114,54 @@ namespace CoolTip
         }
     }
 
+    public class ManagerListBoxItem : IManager
+    {
+        public string GetTip(object sender)
+        {
+            return (sender as ListBoxItem).ToolTipText;
+        }
+
+        public Rectangle GetBounds(object sender)
+        {
+            var item = sender as ListBoxItem;
+            var bounds = item.Owner.Bounds;
+            bounds.Y = bounds.Y + (item.Location.Y / item.Owner.ItemHeight) * item.Owner.ItemHeight;
+            bounds.Height = item.Owner.ItemHeight;
+            return item.Owner.Parent.RectangleToScreen(bounds);
+        }
+
+        public bool GetVisible(object sender)
+        {
+            var item = sender as ListBoxItem;
+            using (var graphics = item.Owner.CreateGraphics())
+            {
+                var size = graphics.MeasureString(item.ToolTipText, item.Owner.Font).ToSize();
+                return size.Width > item.Owner.Width;
+            }
+        }
+    }
+
+    public class ManagerListViewItem : IManager
+    {
+        public string GetTip(object sender)
+        {
+            return (sender as ListViewItem).ToolTipText;
+        }
+
+        public Rectangle GetBounds(object sender)
+        {
+            var item = sender as ListViewItem;
+            var bounds = item.Bounds;
+            return item.ListView.RectangleToScreen(bounds);
+        }
+
+        public bool GetVisible(object sender)
+        {
+            var item = sender as ListViewItem;
+            return !String.IsNullOrWhiteSpace(item.ToolTipText);
+        }
+    }
+
     public class Manager<TComponent> : IManager
         where TComponent : Component
     {
