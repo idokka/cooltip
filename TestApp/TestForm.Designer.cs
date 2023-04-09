@@ -30,8 +30,8 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TestForm));
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("Item1");
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("Item2");
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("Item1");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("Item2");
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
@@ -56,7 +56,9 @@
             this.listView1 = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.coolTip = new CoolTip.CoolTip(this.components);
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.button7 = new System.Windows.Forms.Button();
+            this.button8 = new System.Windows.Forms.Button();
+            this.button9 = new System.Windows.Forms.Button();
             this.toolStrip.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -135,12 +137,12 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(23, 19);
+            this.button6.Location = new System.Drawing.Point(18, 11);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(75, 23);
             this.button6.TabIndex = 0;
             this.button6.Text = "button6";
-            this.coolTip.SetTipText(this.button6, "Inside panel");
+            this.coolTip.SetTipText(this.button6, "Simple with arrow");
             this.button6.UseVisualStyleBackColor = true;
             // 
             // radioButton1
@@ -153,7 +155,7 @@
             this.radioButton1.TabIndex = 0;
             this.radioButton1.TabStop = true;
             this.radioButton1.Text = "Large Icon";
-            this.coolTip.SetTipText(this.radioButton1, "Inside group box");
+            this.coolTip.SetTipText(this.radioButton1, "Show large icons");
             this.radioButton1.UseVisualStyleBackColor = true;
             this.radioButton1.CheckedChanged += new System.EventHandler(this.radioButton1_CheckedChanged);
             // 
@@ -166,7 +168,7 @@
             this.radioButton2.TabIndex = 1;
             this.radioButton2.TabStop = true;
             this.radioButton2.Text = "Details";
-            this.coolTip.SetTipText(this.radioButton2, "!Or even with exclamation");
+            this.coolTip.SetTipText(this.radioButton2, "Show detailed list");
             this.radioButton2.UseVisualStyleBackColor = true;
             this.radioButton2.CheckedChanged += new System.EventHandler(this.radioButton1_CheckedChanged);
             // 
@@ -248,10 +250,13 @@
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel1.Controls.Add(this.button9);
+            this.panel1.Controls.Add(this.button8);
+            this.panel1.Controls.Add(this.button7);
             this.panel1.Controls.Add(this.button6);
-            this.panel1.Location = new System.Drawing.Point(103, 122);
+            this.panel1.Location = new System.Drawing.Point(103, 116);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(121, 62);
+            this.panel1.Size = new System.Drawing.Size(206, 82);
             this.panel1.TabIndex = 8;
             // 
             // groupBox1
@@ -259,7 +264,7 @@
             this.groupBox1.Controls.Add(this.radioButton3);
             this.groupBox1.Controls.Add(this.radioButton2);
             this.groupBox1.Controls.Add(this.radioButton1);
-            this.groupBox1.Location = new System.Drawing.Point(255, 116);
+            this.groupBox1.Location = new System.Drawing.Point(315, 116);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(150, 94);
             this.groupBox1.TabIndex = 9;
@@ -288,7 +293,7 @@
             "list box items",
             "also can have tips",
             "if they doesn\'t fit into the parent list box"});
-            this.listBox1.Location = new System.Drawing.Point(425, 122);
+            this.listBox1.Location = new System.Drawing.Point(471, 116);
             this.listBox1.Name = "listBox1";
             this.coolTip.SetShowLongItemTips(this.listBox1, true);
             this.listBox1.Size = new System.Drawing.Size(132, 82);
@@ -301,11 +306,11 @@
             this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1});
             this.listView1.HideSelection = false;
-            listViewItem3.ToolTipText = "Some tooltip for Item1";
-            listViewItem4.ToolTipText = "Some tooltip for Item2";
+            listViewItem1.ToolTipText = "Some tooltip for Item1";
+            listViewItem2.ToolTipText = "Some tooltip for Item2";
             this.listView1.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem3,
-            listViewItem4});
+            listViewItem1,
+            listViewItem2});
             this.listView1.Location = new System.Drawing.Point(609, 116);
             this.listView1.Name = "listView1";
             this.coolTip.SetShowItemTips(this.listView1, true);
@@ -316,6 +321,37 @@
             // coolTip
             // 
             this.coolTip.BaseForm = this;
+            this.coolTip.IconMarging = new System.Windows.Forms.Padding(2, 3, 2, 2);
+            // 
+            // button7
+            // 
+            this.button7.Location = new System.Drawing.Point(18, 43);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(75, 23);
+            this.button7.TabIndex = 1;
+            this.button7.Text = "button7";
+            this.coolTip.SetTipText(this.button7, "i)Information tip");
+            this.button7.UseVisualStyleBackColor = true;
+            // 
+            // button8
+            // 
+            this.button8.Location = new System.Drawing.Point(115, 11);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(75, 23);
+            this.button8.TabIndex = 2;
+            this.button8.Text = "button8";
+            this.coolTip.SetTipText(this.button8, "!Warning tip");
+            this.button8.UseVisualStyleBackColor = true;
+            // 
+            // button9
+            // 
+            this.button9.Location = new System.Drawing.Point(115, 43);
+            this.button9.Name = "button9";
+            this.button9.Size = new System.Drawing.Size(75, 23);
+            this.button9.TabIndex = 3;
+            this.button9.Text = "button9";
+            this.coolTip.SetTipText(this.button9, "?Question tip");
+            this.button9.UseVisualStyleBackColor = true;
             // 
             // TestForm
             // 
@@ -378,7 +414,9 @@
         private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.RadioButton radioButton3;
-        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.Button button9;
     }
 }
 

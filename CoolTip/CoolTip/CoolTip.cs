@@ -10,6 +10,10 @@ using System.ComponentModel.Design;
 
 namespace CoolTip
 {
+    /// <summary>
+    /// Represents a small rectangular pop-up window that displays a brief description
+    /// of a control's purpose when the user rests the pointer on the control.
+    /// </summary>
     [ProvideProperty("TipText", typeof(Control))]
     [ProvideProperty("HelpText", typeof(Control))]
     [ProvideProperty("ShowLongItemTips", typeof(ListBox))]
@@ -19,64 +23,206 @@ namespace CoolTip
     [ToolboxBitmap(typeof(ToolTip))]
     public class CoolTip : Component, IExtenderProvider, IMessageFilter
     {
+        /// <summary>
+        /// Wrapper for native window.
+        /// </summary>
         private class TipNativeWindow : NativeWindow
         {
+            /// <summary>
+            /// Reference to the owner component.
+            /// </summary>
             private CoolTip _control;
 
+            /// <summary>
+            /// Create new tip window and save reference to the owner component.
+            /// </summary>
+            /// <param name="control">Reference to the owner component.</param>
             internal TipNativeWindow(CoolTip control)
             {
                 _control = control;
             }
 
-            protected override void WndProc(ref Message m)
+            /// <summary>
+            /// Pass window message process to the owner component.
+            /// </summary>
+            /// <param name="msg"></param>
+            protected override void WndProc(ref Message msg)
             {
                 if (_control != null)
-                    _control.WndProc(ref m);
+                    _control.WndProc(ref msg);
             }
         }
 
+        /// <summary>
+        /// Universal timer, used to delay actions.
+        /// </summary>
         private class TipTimer : Timer
         {
+            /// <summary>
+            /// Target for the delayed action.
+            /// </summary>
             public object Target { get; }
 
+            /// <summary>
+            /// Create new timer and save target for delayed action.
+            /// </summary>
+            /// <param name="target"></param>
             public TipTimer(object target)
             {
                 Target = target;
             }
         }
 
+        /// <summary>
+        /// Wrapper for tip native window.
+        /// </summary>
         private TipNativeWindow _window;
+
+        /// <summary>
+        /// Timer for delayed window hide.
+        /// </summary>
         private TipTimer _timerHide;
+
+        /// <summary>
+        /// Timer for delayed window show.
+        /// </summary>
         private TipTimer _timerShow;
+
+        /// <summary>
+        /// Parent form.
+        /// Needed to extend functionality and override default befavior.
+        /// </summary>
         private Form _baseForm;
+
+        /// <summary>
+        /// Top-level control (in general case - base form).
+        /// Ported from original `ToolTip`.
+        /// </summary>
         private Control _topControl;
+
+        /// <summary>
+        /// Object currently in `disposing` state.
+        /// </summary>
         private bool _isDisposing;
 
+        /// <summary>
+        /// Set to the target conrtol for currently showing tip window.
+        /// Will be reset to `null` after tip window hide.
+        /// </summary>
         private object _currentTarget;
+
+        /// <summary>
+        /// Target control for delayed tip show.
+        /// Will be reset to `null` after delayed action process.
+        /// </summary>
         private object _futureTarget;
+
+        /// <summary>
+        /// Target control for manual tip show.
+        /// </summary>
         private object _manualTarget;
+
+        /// <summary>
+        /// Target control for later showed tip.
+        /// Will be reset to `null` after `ReshowDelay` delay.
+        /// </summary>
         private object _lastTarget;
 
+        /// <summary>
+        /// All available targets (i.e. with assigned tip text / help text) placed on the `BaseForm`.
+        /// </summary>
         private HashSet<object> _targets;
+
+        /// <summary>
+        /// Render options for next (current) tool tip.
+        /// Includes tip text, icon and window geometry.
+        /// </summary>
         private RenderTipInfo _renderInfo;
+
+        /// <summary>
+        /// Timestamp of later showed tool tip.
+        /// </summary>
         private DateTime _lastShowed;
 
+        /// <summary>
+        /// All available `ListBox`se for process their items.
+        /// </summary>
         private HashSet<ListBox> _listBoxes;
+
+        /// <summary>
+        /// All available `ListView`s for process their items.
+        /// </summary>
         private HashSet<ListView> _listViews;
 
+        /// <summary>
+        /// List of all assigned tip managers.
+        /// Make relationship between type and it's manager.
+        /// </summary>
         private Dictionary<Type, IManager> _managers;
+
+        /// <summary>
+        /// General tip manager, used for all controls derived from `Control`.
+        /// </summary>
         private ManagerControl _managerControl;
+
+        /// <summary>
+        /// Tip manager for `ToolStripItem`s.
+        /// </summary>
         private ManagerToolStripItem _managerToolStripItem;
+
+        /// <summary>
+        /// Tip manager for `ListBox` items.
+        /// <seealso cref="ListBoxItem"/>.
+        /// </summary>
         private ManagerListBoxItem _managerListBox;
+
+        /// <summary>
+        /// Tip manager for `ListViewItem`s.
+        /// </summary>
         private ManagerListViewItem _managerListView;
 
+        /// <summary>
+        /// List of all assigned visitors.
+        /// Make relationship between type and it's visitor.
+        /// </summary>
         private Dictionary<Type, IVisitor> _visitors;
+
+        /// <summary>
+        /// General visitor for components, derived from `Control`.
+        /// Used to process `Panel`, `GroupBox` etc.
+        /// </summary>
         private VisitorControl _visitorControl;
+
+        /// <summary>
+        /// Visitor for `ToolStrip` component.
+        /// Used to detect hovered `ToolStripItem` inside the hovered `ToolStrip`.
+        /// </summary>
         private VisitorToolStrip _visitorToolStrip;
+
+        /// <summary>
+        /// Visitor for `StatusStrip` component.
+        /// Used to detect hovered `ToolStripItem` inside the hovered `StatusStrip`.
+        /// </summary>
         private VisitorStatusStrip _visitorStatusStrip;
+
+        /// <summary>
+        /// Visitor for `ListBox`.
+        /// Used to detect hovered line inside the hovered `ListBox`.
+        /// <seealso cref="ListBoxItem"/>.
+        /// </summary>
         private VisitorListBox _visitorListBox;
+
+        /// <summary>
+        /// Visitor for `ListView`.
+        /// Used to detect hovered `ListViewItem` inside the hovered `ListView`.
+        /// </summary>
         private VisitorListView _visitorListView;
 
+        /// <summary>
+        /// Create new object and set it's owner container.
+        /// </summary>
+        /// <param name="container">Parent container</param>
+        /// <exception cref="ArgumentNullException">Will be thrown if `container` is `null`.</exception>
         public CoolTip(IContainer container)
             : this()
         {
@@ -86,6 +232,9 @@ namespace CoolTip
             container.Add(this);
         }
 
+        /// <summary>
+        /// Create new object, initialize it's properties with default values.
+        /// </summary>
         public CoolTip()
         {
             ShowDelay = 1000;
@@ -138,11 +287,17 @@ namespace CoolTip
             _window = new TipNativeWindow(this);
         }
 
+        /// <summary>
+        /// Destroy tool tip window handle.
+        /// </summary>
         ~CoolTip()
         {
             DestroyHandle();
         }
 
+        /// <summary>
+        /// Top-level control placed on the `BaseForm`.
+        /// </summary>
         private Control TopLevelControl
         {
             get
@@ -153,6 +308,10 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Search and update all sub-controls of the top-level control.
+        /// </summary>
+        /// <returns>Determined top-level control.</returns>
         private Control UpdateTopLevelControl()
         {
             if (_topControl != null)
@@ -235,6 +394,9 @@ namespace CoolTip
             return _topControl;
         }
 
+        /// <summary>
+        /// Tool tip window handle.
+        /// </summary>
         [Browsable(false)]
         public IntPtr Handle
         {
@@ -246,49 +408,110 @@ namespace CoolTip
             }
         }
 
-        // Arial, 9pt, style=Bold
+        /// <summary>
+        /// Tool tip window text font.
+        /// </summary>
+        // Font style, used in the original Delphi component.
+        //[DefaultValue(typeof(Font), "Arial, 9pt, style=Bold")]
         [DefaultValue(typeof(Font), "Microsoft Sans Serif, 8.25pt")]
         public Font Font { get; set; }
 
+        /// <summary>
+        /// Tool tip window background color.
+        /// </summary>
         [DefaultValue(typeof(Color), "Window")]
         public Color BackColor { get; set; }
 
+        /// <summary>
+        /// Tool tip window foreground (text) color.
+        /// </summary>
         [DefaultValue(typeof(Color), "ControlText")]
         public Color ForeColor { get; set; }
 
+        /// <summary>
+        /// Delay between control mouse hover and tool tip first appearance.
+        /// </summary>
         [DefaultValue(1000)]
         public int ShowDelay { get; set; }
 
+        /// <summary>
+        /// Delay between tool tip appearance and it's disappearance.
+        /// I.e. tool tip appearance time.
+        /// </summary>
         [DefaultValue(5000)]
         public int HideDelay { get; set; }
 
+        /// <summary>
+        /// Delay between switching hovered control without tool tip appearance interruption.
+        /// </summary>
         [DefaultValue(100)]
         public int ReshowDelay { get; set; }
 
+        /// <summary>
+        /// Padding between tool tip borders and tagret control.
+        /// Default: 2px for top and 2px for bottom, 0px for left and right.
+        /// </summary>
         [DefaultValue(typeof(Padding), "0, 2, 0, 2")]
         public Padding Marging { get; set; }
 
+        /// <summary>
+        /// Padding inside tool tip window between text and border.
+        /// Default: 2px for all sides.
+        /// </summary>
         [DefaultValue(typeof(Padding), "2, 2, 2, 2")]
         public Padding Padding { get; set; }
 
+        /// <summary>
+        /// Icon size inside tool tip window.
+        /// Default: 12px * 12px.
+        /// </summary>
         [DefaultValue(typeof(Size), "12, 12")]
         public Size IconSize { get; set; }
 
-        [DefaultValue(typeof(Padding), "2, 3, 2, 2")]
+        /// <summary>
+        /// Marging between tool tip icon and window border.
+        /// Default: 3px for top and 2px for bottom, 2px for left and right.
+        /// </summary>
+        [DefaultValue(typeof(Padding), "2, 3, 2, 3")]
         public Padding IconMarging { get; set; }
 
+        /// <summary>
+        /// Tool tip window border width.
+        /// </summary>
         [DefaultValue(1)]
         public int BorderWidth { get; set; }
 
+        /// <summary>
+        /// Tool tip window border color.
+        /// </summary>
         [DefaultValue(typeof(Color), "ActiveBorder")]
         public Color BorderColor { get; set; }
 
+        /// <summary>
+        /// Component owner form, i.e. top-level control.
+        /// </summary>
         [Browsable(true)]
         public Form BaseForm {
             get { return _baseForm; }
             set { _baseForm = value; UpdateTopLevelControl(); }
         }
 
+        /// <summary>
+        /// List of all contols visitors.
+        /// Make relationship between type and it's visitor.
+        /// </summary>
+        public Dictionary<Type, IVisitor> Visitors { get { return _visitors; } }
+
+        /// <summary>
+        /// List of all assigned tip managers.
+        /// Make relationship between type and it's manager.
+        /// </summary>
+        public Dictionary<Type, IManager> Managers { get { return _managers; } }
+
+        /// <summary>
+        /// Dispose object, if needed.
+        /// </summary>
+        /// <param name="disposing">Is object in disposal state.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -311,12 +534,19 @@ namespace CoolTip
             base.Dispose(disposing);
         }
 
-
+        /// <summary>
+        /// Handler for top-level control creation.
+        /// </summary>
+        /// <param name="sender">Reference to the top-level control.</param>
+        /// <param name="e">Event arguments.</param>
         private void TopLevelCreated(object sender, EventArgs e)
         {
             CreateHandle();
         }
 
+        /// <summary>
+        /// Create tool-tip window by wrapper.
+        /// </summary>
         private void CreateHandle()
         {
             if (!_isDisposing && IsHandleCreated() == false)
@@ -325,11 +555,19 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Handler for top-level control destruction.
+        /// </summary>
+        /// <param name="sender">Reference to the top-level control.</param>
+        /// <param name="e">Event arguments.</param>
         private void TopLevelDestroyed(object sender, EventArgs e)
         {
             DestroyHandle();
         }
 
+        /// <summary>
+        /// Destroy tool-tip window with it's wrapper.
+        /// </summary>
         private void DestroyHandle()
         {
             if (!_isDisposing && IsHandleCreated())
@@ -338,6 +576,12 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Handle changing parent event of the currently set top-level control.
+        /// Part of the original `ToolTip` code.
+        /// </summary>
+        /// <param name="s">Reference to the top-level control.</param>
+        /// <param name="e">Event arguments</param>
         private void TopLevelPropertyChanged(object s, EventArgs e)
         {
             ClearBaseFormEvent();
@@ -350,6 +594,9 @@ namespace CoolTip
             _topControl = TopLevelControl;
         }
 
+        /// <summary>
+        /// Reset assigned events of the top-level control.
+        /// </summary>
         private void ClearTopLevelControlEvents()
         {
             if (_topControl != null)
@@ -360,6 +607,9 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Reset assigned events of the `BaseForm`.
+        /// </summary>
         private void ClearBaseFormEvent()
         {
             if (_baseForm != null)
@@ -370,13 +620,22 @@ namespace CoolTip
             }
         }
 
-
+        /// <summary>
+        /// Do reset currently showed tool tip.
+        /// </summary>
+        /// <param name="sender">Reference to the event sender.</param>
+        /// <param name="e">Event arguments.</param>
         private void ResetHint(object sender, EventArgs e)
         {
             StopTimerShow();
             DoHide();
         }
 
+        /// <summary>
+        /// Handler for top-level control handle creation.
+        /// </summary>
+        /// <param name="sender">Reference to the event sender.</param>
+        /// <param name="eventargs">Event arguments</param>
         private void HandleCreated(object sender, EventArgs eventargs)
         {
             // Reset the toplevel control when the owner's handle is recreated.
@@ -385,12 +644,24 @@ namespace CoolTip
             UpdateTopLevelControl();
         }
 
+        /// <summary>
+        /// Part of th `IExtenderProvider` which determine possibility to extend target's properties.
+        /// </summary>
+        /// <param name="target">Control to check extension possibility.</param>
+        /// <returns>`True` if extension is possible.</returns>
         public bool CanExtend(object target)
         {
             return !(target is CoolTip)
                 && ((target is Control) || (target is ListBox) || (target is ListView));
         }
 
+        /// <summary>
+        /// Create and add generic manager with provided function.
+        /// </summary>
+        /// <typeparam name="TComponent">Type of the specified component.</typeparam>
+        /// <param name="getTip">Functor which returns tip text for specified target.</param>
+        /// <param name="getBounds">Functor which returns bounds of the specified target.</param>
+        /// <param name="getVisible">Functor which returns visibility of the specified target.</param>
         public void AddInfo<TComponent>(
             Func<TComponent, string> getTip,
             Func<TComponent, Rectangle> getBounds,
@@ -404,6 +675,13 @@ namespace CoolTip
             _managers.Add(typeof(TComponent), info);
         }
 
+        /// <summary>
+        /// Get manager of the specified target component.
+        /// Also check derived classes of the available managers.
+        /// </summary>
+        /// <param name="target">Target component.</param>
+        /// <returns>Manager of the specified component.</returns>
+        /// <exception cref="IndexOutOfRangeException">Will be thrown if manager for specified component will be not found.</exception>
         public IManager GetManager(object target)
         {
             var type = target.GetType();
@@ -420,6 +698,10 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Try to recursively find currently hovered target component.
+        /// </summary>
+        /// <returns>Hovered target component.</returns>
         private object FindCurrentTarget()
         {
             var location = _baseForm.PointToClient(Cursor.Position);
@@ -439,17 +721,24 @@ namespace CoolTip
                     break;
 
                 target = newTarget;
-                //Console.WriteLine(target);
+                //Debug.WriteLine("next target: {0}", target);
             }
             return target;
         }
 
-        public bool PreFilterMessage(ref Message m)
+        /// <summary>
+        /// Part of the `IMessageFilter`.
+        /// Process `WM_MOUSEMOVE` of the `BaseControl`.
+        /// Also controls appearance behavior.
+        /// </summary>
+        /// <param name="msg">Window message.</param>
+        /// <returns>Always `False`.</returns>
+        public bool PreFilterMessage(ref Message msg)
         {
             if (_baseForm == null || _isDisposing || (_baseForm.Handle != Native.GetForegroundWindow()))
                 return false;
 
-            if (m.Msg == Native.WM_MOUSEMOVE)
+            if (msg.Msg == Native.WM_MOUSEMOVE)
             {
                 //Debug.WriteLine("{0} {1}", DateTime.Now, m);
 
@@ -495,13 +784,13 @@ namespace CoolTip
                     }
                 }
             }
-            else if (m.Msg == Native.WM_MOUSELEAVE)
+            else if (msg.Msg == Native.WM_MOUSELEAVE)
             {
                 if (_manualTarget == null)
                     DoHide();
                 StopTimerShow();
             }
-            else if (m.Msg == Native.WM_KEYDOWN)
+            else if (msg.Msg == Native.WM_KEYDOWN)
             {
                 DoHide();
                 StopTimerShow();
@@ -510,10 +799,15 @@ namespace CoolTip
             return false;
         }
 
-        public void SetTipText(Control control, string caption)
+        /// <summary>
+        /// Set tip text for specified control, used by form designer.
+        /// </summary>
+        /// <param name="control">Control to set tool tip text.</param>
+        /// <param name="text">Tool tip text.</param>
+        public void SetTipText(Control control, string text)
         {
             _targets.Add(control);
-            bool added = _managerControl.SetTip(control, caption);
+            bool added = _managerControl.SetTip(control, text);
             if (!DesignMode)
             {
                 if (added)
@@ -533,6 +827,11 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Get tip text for specified control, used by form designer.
+        /// </summary>
+        /// <param name="control">Control to get tool tip text.</param>
+        /// <returns>Tool tip text of the specified control.</returns>
         [DefaultValue("")]
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string GetTipText(Control control)
@@ -540,6 +839,11 @@ namespace CoolTip
             return _managerControl.GetTip(control);
         }
 
+        /// <summary>
+        /// Set help text for specified control, used by form designer.
+        /// </summary>
+        /// <param name="control">Control to set help text.</param>
+        /// <param name="help">Help text.</param>
         public void SetHelpText(Control control, string help)
         {
             _targets.Add(control);
@@ -566,6 +870,11 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Get help text for specified control, used by form designer.
+        /// </summary>
+        /// <param name="control">Control to get help text.</param>
+        /// <returns>Help text for the specified control.</returns>
         [DefaultValue("")]
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string GetHelpText(Control control)
@@ -573,12 +882,22 @@ namespace CoolTip
             return _managerControl.GetHelp(control);
         }
 
+        /// <summary>
+        /// Process items of the specified `ListBox`, used by form designer.
+        /// </summary>
+        /// <param name="listBox">`ListBox` to process.</param>
+        /// <returns>`True` if specified `ListBox` added for processing it's items.</returns>
         [DefaultValue(false)]
         public bool GetShowLongItemTips(ListBox listBox)
         {
             return _listBoxes.Contains(listBox);
         }
 
+        /// <summary>
+        /// Process items of the specified `ListBox`, used by form designer.
+        /// </summary>
+        /// <param name="listBox">`ListBox` to process.</param>
+        /// <param name="value">Process or not.</param>
         public void SetShowLongItemTips(ListBox listBox, bool value)
         {
             if (value)
@@ -587,12 +906,22 @@ namespace CoolTip
                 _listBoxes.Remove(listBox);
         }
 
+        /// <summary>
+        /// Process items of the specified `ListView`, used by form designer.
+        /// </summary>
+        /// <param name="listView">`ListView` to process.</param>
+        /// <returns>`True` if specified `ListView` added for processing it's items.</returns>
         [DefaultValue(false)]
         public bool GetShowItemTips(ListView listView)
         {
             return _listViews.Contains(listView);
         }
 
+        /// <summary>
+        /// Process items of the specified `ListView`, used by form designer.
+        /// </summary>
+        /// <param name="listView">`ListView` to process.</param>
+        /// <param name="value">Process or not.</param>
         public void SetShowItemTips(ListView listView, bool value)
         {
             if (value)
@@ -601,6 +930,15 @@ namespace CoolTip
                 _listViews.Remove(listView);
         }
 
+        /// <summary>
+        /// 'Manually' show tip with text and icon for target component.
+        /// Resets currently showed tip.
+        /// </summary>
+        /// <param name="target">Target component to show a tip.</param>
+        /// <param name="icon">Icon of the tip.</param>
+        /// <param name="delay">Delay of the tip in milliseconds.
+        /// Default if `null`. Forever if `0`.</param>
+        /// <param name="text">Text of the tip.</param>
         public void Show(object target, Icon icon, int? delay, string text)
         {
             var manager = GetManager(target);
@@ -612,9 +950,20 @@ namespace CoolTip
             _manualTarget = target;
             _renderInfo = new RenderTipInfo(icon, text, delay);
             DoShow(target, manager);
-            HideByTimer(target, delay ?? HideDelay);
+            HideByTimer(delay ?? HideDelay);
         }
 
+        /// <summary>
+        /// Show tip with text and exclamation icon for target component
+        /// only if the specified expression returns `false`.
+        /// Returns expression result.
+        /// </summary>
+        /// <param name="target">Target component to show a tip.</param>
+        /// <param name="expression">Expression to validate.</param>
+        /// <param name="text">Text of the tip.</param>
+        /// <param name="delay">Delay of the tip in milliseconds.
+        /// Default if `null`. Forever if `0`.</param>
+        /// <returns>Result of the specified expression.</returns>
         public bool Validate(object target, bool expression, string text, int? delay = null)
         {
             if (expression == false)
@@ -628,12 +977,20 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Hide currently showing tip.
+        /// </summary>
         public void Hide()
         {
             if (_manualTarget != null)
                 DoHide();
         }
 
+        /// <summary>
+        /// Handler process `BaseForm` help request (used by `?` button on the form caption.)
+        /// </summary>
+        /// <param name="sender">Reference for the sender.</param>
+        /// <param name="e">Event arguments.</param>
         private void HelpRequested(object sender, HelpEventArgs e)
         {
             DoHide();
@@ -645,11 +1002,19 @@ namespace CoolTip
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Determines is tool tip window handle created or not.
+        /// </summary>
+        /// <returns>`True` if handle is already created.</returns>
         internal bool IsHandleCreated()
         {
             return (_window != null) && (_window.Handle != IntPtr.Zero);
         }
 
+        /// <summary>
+        /// Set tool tip window style and parent.
+        /// </summary>
+        /// <returns>Filled `CreateParams` object with needed parameters.</returns>
         protected virtual CreateParams GetCreateParams()
         {
             CreateParams cp = new CreateParams();
@@ -665,6 +1030,9 @@ namespace CoolTip
             return cp;
         }
 
+        /// <summary>
+        /// Do hide current tip if any.
+        /// </summary>
         private void DoHide()
         {
             if (_currentTarget != null && !_isDisposing)
@@ -681,17 +1049,24 @@ namespace CoolTip
             }
         }
 
-        private void HideByTimer(object target, int delay)
+        /// <summary>
+        /// Start timer for tip delayed hide.
+        /// </summary>
+        /// <param name="delay">Delay in milliseconds.</param>
+        private void HideByTimer(int delay)
         {
             if ((_timerHide == null) && (delay > 0))
             {
-                _timerHide = new TipTimer(target);
+                _timerHide = new TipTimer(null);
                 _timerHide.Tick += TimerHideHandler;
                 _timerHide.Interval = delay;
                 _timerHide.Start();
             }
         }
 
+        /// <summary>
+        ///  Cancel delayed tip hide.
+        /// </summary>
         protected void StopTimerHide()
         {
             if (_timerHide != null)
@@ -702,11 +1077,21 @@ namespace CoolTip
             }
         }
 
+        /// <summary>
+        /// Timer handler for tip delayed hide.
+        /// </summary>
+        /// <param name="source">Timer reference.</param>
+        /// <param name="args">Event arguments.</param>
         private void TimerHideHandler(object source, EventArgs args)
         {
             DoHide();
         }
 
+        /// <summary>
+        /// Start timer for tip delayed show.
+        /// </summary>
+        /// <param name="target">Target component of the future tip.</param>
+        /// <param name="interval">Delay in milliseconds.</param>
         private void ShowByTimer(object target, int interval)
         {
             if (_timerShow == null)
@@ -716,22 +1101,34 @@ namespace CoolTip
                 _timerShow.Tick += TimerShowHandler;
                 _timerShow.Interval = interval;
                 _timerShow.Start();
-                //Debug.WriteLine("timer start");
+#if DEBUG
+                Debug.WriteLine("{0}\tshow timer start for {1}", DateTime.Now, _futureTarget);
+#endif
             }
         }
 
+        /// <summary>
+        /// Cancel delayed tip show.
+        /// </summary>
         protected void StopTimerShow()
         {
             if (_timerShow != null)
             {
+#if DEBUG
+                Debug.WriteLine("{0}\tshow timer stop for {1}", DateTime.Now, _futureTarget);
+#endif
                 _timerShow.Stop();
                 _timerShow.Dispose();
                 _timerShow = null;
                 _futureTarget = null;
-                //Debug.WriteLine("timer stop");
             }
         }
 
+        /// <summary>
+        /// Timer handler for tip delayed show.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="args"></param>
         private void TimerShowHandler(object source, EventArgs args)
         {
             var timer = source as TipTimer;
@@ -739,11 +1136,20 @@ namespace CoolTip
                 DoShow(timer.Target);
         }
 
-        private Size GetTextRect(string caption)
+        /// <summary>
+        /// Measure text bounds with current font.
+        /// </summary>
+        /// <param name="text">Text to measure bound of.</param>
+        /// <returns></returns>
+        private Size GetTextRect(string text)
         {
-            return TextRenderer.MeasureText(caption, Font);
+            return TextRenderer.MeasureText(text, Font);
         }
 
+        /// <summary>
+        /// Determine tip manager and process real tip show for specified target.
+        /// </summary>
+        /// <param name="target">Target for the tip.</param>
         private void DoShow(object target)
         {
             var manager = GetManager(target);
@@ -758,13 +1164,19 @@ namespace CoolTip
 
             _renderInfo = new RenderTipInfo(hint);
             DoShow(target, manager);
-            HideByTimer(target, HideDelay);
+            HideByTimer(HideDelay);
         }
 
+        /// <summary>
+        /// Process real tip show for specified target with specified tip manager.
+        /// </summary>
+        /// <param name="target">Target for the tip.</param>
+        /// <param name="manager">Tip managet for the tip.</param>
         private void DoShow(object target, IManager manager)
         {
             _currentTarget = target;
 
+            // calculate general variables, like size, location, etc.
             var bounds = manager.GetBounds(target);
             var location = new Point(bounds.Left - Marging.Left, bounds.Bottom + Marging.Bottom);
             var border = new Padding(BorderWidth);
@@ -772,9 +1184,11 @@ namespace CoolTip
             var screen = Screen.FromRectangle(bounds).Bounds;
             var window = _baseForm.Bounds;
 
+            // extend bounds for icon
             size.Width += IconSize.Width + IconMarging.Horizontal;
             var rect = new Rectangle(location, size);
 
+            // try to place tip inside base form: check bottom
             bool isOutOfBottom = (rect.Bottom > window.Bottom)
                 && (rect.Height < window.Height);
             if (isOutOfBottom)
@@ -783,12 +1197,14 @@ namespace CoolTip
                 _renderInfo.MoveIconDown();
             }
 
+            // try to place tip inside base form: check right
             bool isOutOfRight = (rect.Right > window.Right);
             int futureLeft = bounds.Left - size.Width - Marging.Left - border.Horizontal;
             bool isOutOfLeft = (futureLeft < window.Left);
             bool widtherThanWindow = (rect.Width < window.Width);
             bool isOutOfScreen = (rect.Right > screen.Width);
 
+            // reposition icon to the right if tip already crossed right bound
             if ((isOutOfRight && !isOutOfLeft && widtherThanWindow) || isOutOfScreen)
             {
                 rect.X = futureLeft;
@@ -799,6 +1215,7 @@ namespace CoolTip
                 _renderInfo.RedirectArrowRight();
             }
 
+            // reposition and show tip window
             var handle = new HandleRef(this, Handle);
             Native.SetWindowPos(handle,
                 Native.HWND_TOPMOST, rect.Left, rect.Top, rect.Width, rect.Height,
@@ -808,11 +1225,18 @@ namespace CoolTip
             StopTimerShow();
         }
 
+        /// <summary>
+        /// Draw elements of the tool tip window.
+        /// </summary>
+        /// <param name="graphics">Graphics of window itself.</param>
+        /// <param name="bounds">Window bounds.</param>
+        /// <param name="info">Tool tip info (i.e. icon, text, etc.).</param>
         private void Draw(Graphics graphics, Rectangle bounds, RenderTipInfo info)
         {
             bounds.Width -= 1;
             bounds.Height -= 1;
 
+            // draw base elements (background, border)
             using (var brush = new SolidBrush(BackColor))
                 graphics.FillRectangle(brush, bounds);
             using (var pen = new Pen(BorderColor, BorderWidth))
@@ -822,6 +1246,8 @@ namespace CoolTip
                 var border = new Padding(BorderWidth);
                 var text = GetTextRect(info.Info.Text);
 
+                // determine icon position and draw it's background:
+                // right side or left side of the window
                 Rectangle rectangle = Rectangle.Empty;
                 if (info.IsIconAtRight)
                 {
@@ -841,6 +1267,8 @@ namespace CoolTip
                 }
                 graphics.FillRectangle(brush, rectangle);
 
+                // determine positions and draw icon itself:
+                // at the bottom or at the top of the window
                 if (info.IsAtBottom)
                 {
                     rectangle = new Rectangle(
@@ -859,6 +1287,8 @@ namespace CoolTip
                 icon.MakeTransparent(Color.White);
                 graphics.DrawImage(icon, rectangle);
             }
+
+            // determine location-and-size and draw tool tip text
             var location = Point.Empty;
             if (info.IsIconAtRight)
             {
@@ -875,6 +1305,10 @@ namespace CoolTip
             TextRenderer.DrawText(graphics, info.Info.Text, Font, location, ForeColor);
         }
 
+        /// <summary>
+        /// Window messages filter process for tool tip window.
+        /// </summary>
+        /// <param name="msg">Window message to process.</param>
         private void WndProc(ref Message msg)
         {
             switch (msg.Msg)
@@ -882,7 +1316,7 @@ namespace CoolTip
                 case Native.WM_PRINTCLIENT:
                 case Native.WM_PAINT:
                     {
-                        Native.PAINTSTRUCT lpPaint = default(Native.PAINTSTRUCT);
+                        Native.PAINTSTRUCT lpPaint = default;
                         IntPtr hdc = Native.BeginPaint(new HandleRef(this, msg.HWnd), ref lpPaint);
                         Graphics graphics = Graphics.FromHdc(hdc);
                         try
@@ -905,6 +1339,7 @@ namespace CoolTip
                     break;
             }
 
+            // default window message processing
             if (_window != null)
             {
                 _window.DefWndProc(ref msg);

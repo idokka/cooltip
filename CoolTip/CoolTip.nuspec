@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>content\icon.png</icon>
+    <iconUrl>https://pimpl.dev/public/cooltip/icon.png</iconUrl>
+    <projectUrl>https://pimpl.dev/public/cooltip</projectUrl>
+    <description>$description$</description>
+    <!-- <releaseNotes>Summary of changes made in this release of the package.</releaseNotes> -->
+    <copyright>$copyright$</copyright>
+    <tags>tooltip hint</tags>
+  </metadata>
+</package>

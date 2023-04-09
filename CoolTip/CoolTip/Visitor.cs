@@ -5,13 +5,34 @@ using System.ComponentModel;
 
 namespace CoolTip
 {
+    /// <summary>
+    /// Discover for component's internal items / sub-components
+    /// by absolute screen coordinates.
+    /// </summary>
     public interface IVisitor
     {
+        /// <summary>
+        /// Try to find any observable internal item / sub-component
+        /// of the specified target component.
+        /// </summary>
+        /// <param name="sender">Target component to observe.</param>
+        /// <param name="location">Absolute screen mouse coordinates.</param>
+        /// <returns>Found internal item / sub-component or `null`.</returns>
         object GetItem(object sender, Point location);
     }
 
+    /// <summary>
+    /// Discover <seealso cref="Control"/> sub-controls.
+    /// Used for <seealso cref="Panel"/>, <seealso cref="GroupBox"/>, etc.
+    /// </summary>
     public class VisitorControl : IVisitor
     {
+        /// <summary>
+        /// Try to find any observable sub-control.
+        /// </summary>
+        /// <param name="sender">Target control to observe.</param>
+        /// <param name="location">Absolute screen mouse coordinates.</param>
+        /// <returns>Found sub-control or `null`.</returns>
         public object GetItem(object sender, Point location)
         {
             var container = sender as Control;
@@ -21,8 +42,17 @@ namespace CoolTip
         }
     }
 
+    /// <summary>
+    /// Discover <seealso cref="ToolStrip"/> items.
+    /// </summary>
     public class VisitorToolStrip : IVisitor
     {
+        /// <summary>
+        /// Try to find any observable items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="ToolStrip"/> to observe.</param>
+        /// <param name="location">Absolute screen mouse coordinates.</param>
+        /// <returns>Found item or `null`.</returns>
         public object GetItem(object sender, Point location)
         {
             var container = sender as ToolStrip;
@@ -32,8 +62,17 @@ namespace CoolTip
         }
     }
 
+    /// <summary>
+    /// Discover <seealso cref="StatusStrip"/> items.
+    /// </summary>
     public class VisitorStatusStrip : IVisitor
     {
+        /// <summary>
+        /// Try to find any observable items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="StatusStrip"/> to observe.</param>
+        /// <param name="location">Absolute screen mouse coordinates.</param>
+        /// <returns>Found item or `null`.</returns>
         public object GetItem(object sender, Point location)
         {
             var container = sender as StatusStrip;
@@ -43,67 +82,17 @@ namespace CoolTip
         }
     }
 
-    public interface IListBoxItem
-    {
-        string GetToolTipText();
-    }
-
-    internal class ListBoxItem : IListBoxItem, IEquatable<ListBoxItem>
-    {
-        public int Index { get; set; }
-        public ListBox Owner { get; set; }
-        public Point Location { get; set; }
-        public string ToolTipText { get { return GetToolTipText(); } }
-
-        public string GetToolTipText()
-        {
-            object target = Owner.Items[Index];
-            if (target is string)
-                return target as string;
-            else if (target is IListBoxItem)
-                return (target as IListBoxItem).GetToolTipText();
-            else
-                return target.ToString();
-        }
-
-        public bool Equals(ListBoxItem other)
-        {
-            return (Index == other.Index)
-                && (Owner == other.Owner);
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is ListBoxItem)
-                return Equals(other as ListBoxItem);
-            else
-                return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return Index.GetHashCode() ^ Owner.GetHashCode();
-        }
-
-        //public static bool operator ==(ListBoxItem obj1, ListBoxItem obj2)
-        //{
-        //    if (ReferenceEquals(obj1, obj2))
-        //        return true;
-        //    if (ReferenceEquals(obj1, null))
-        //        return false;
-        //    if (ReferenceEquals(obj2, null))
-        //        return false;
-        //    return obj1.Equals(obj2);
-        //}
-
-        //public static bool operator !=(ListBoxItem obj1, ListBoxItem obj2)
-        //{
-        //    return !(obj1 == obj2);
-        //}
-    }
-
+    /// <summary>
+    /// Discover <seealso cref="ListBox"/> items (lines).
+    /// </summary>
     public class VisitorListBox : IVisitor
     {
+        /// <summary>
+        /// Try to find any observable items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="ListBox"/> to observe.</param>
+        /// <param name="location">Absolute screen mouse coordinates.</param>
+        /// <returns>Found item wrapped in the <seealso cref="ListBoxItem"/> or sender itself.</returns>
         public object GetItem(object sender, Point location)
         {
             var container = sender as ListBox;
@@ -123,22 +112,46 @@ namespace CoolTip
         }
     }
 
+    /// <summary>
+    /// Discover <seealso cref="ListView"/> items.
+    /// </summary>
     public class VisitorListView : IVisitor
     {
+        /// <summary>
+        /// Try to find any observable items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="ListView"/> to observe.</param>
+        /// <param name="location">Absolute screen mouse coordinates.</param>
+        /// <returns>Found item or sender itself</returns>
         public object GetItem(object sender, Point location)
         {
             var container = sender as ListView;
             location = container.PointToClient(location);
             var item = container.GetItemAt(location.X, location.Y);
-            return item;
+            return item ?? sender;
         }
     }
 
+    /// <summary>
+    /// Generic visitor for <seealso cref="Component"/> derives.
+    /// </summary>
+    /// <typeparam name="TComponent">Real type of the component to discover.</typeparam>
     public class Visitor<TComponent> : IVisitor
         where TComponent : Component
     {
+        /// <summary>
+        /// Functor to get child item / sub-component.
+        /// Receives component to discover, absolute screen mouse coordinates.
+        /// Returns found child item / sub-component.
+        /// </summary>
         public Func<TComponent, Point, object> ChildAt { get; set; }
 
+        /// <summary>
+        /// Try to find any observable child items / sub-components.
+        /// </summary>
+        /// <param name="sender">Target component to observe.</param>
+        /// <param name="location">Absolute screen mouse coordinates.</param>
+        /// <returns></returns>
         public object GetItem(object sender, Point location)
         {
             return ChildAt?.Invoke(sender as TComponent, location) ?? null;
