@@ -1,1 +1,1 @@
-nuget pack CoolTip.csproj -properties Configuration=Release
+nuget pack CoolTip.csproj -properties Configuration=Release -ConfigFile ./nuget.config
