@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CoolTip;
+using System;
 using System.Diagnostics;
 using System.Windows.Forms;
 
@@ -29,6 +30,19 @@ namespace TestApp
                 else if (button == radioButton3)
                     listView1.View = View.List;
             }
+        }
+
+        private void bPresentation_Click(object sender, EventArgs e)
+        {
+#if DEBUG
+            if (coolTip.IsPresentationRunning)
+                coolTip.HidePresentation();
+            else
+                coolTip.ShowPresentation();
+#else
+            coolTip.Show(sender, CoolTip.Icon.Warning, 0,
+                "Presentation mode available only in the 'Debug' configuration.");
+#endif
         }
     }
 }

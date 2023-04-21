@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("Item1");
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("Item2");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TestForm));
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("Item1");
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("Item2");
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
@@ -50,15 +50,16 @@
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.button9 = new System.Windows.Forms.Button();
+            this.button8 = new System.Windows.Forms.Button();
+            this.button7 = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.radioButton3 = new System.Windows.Forms.RadioButton();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.listView1 = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.bPresentation = new System.Windows.Forms.Button();
             this.coolTip = new CoolTip.CoolTip(this.components);
-            this.button7 = new System.Windows.Forms.Button();
-            this.button8 = new System.Windows.Forms.Button();
-            this.button9 = new System.Windows.Forms.Button();
             this.toolStrip.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -259,6 +260,36 @@
             this.panel1.Size = new System.Drawing.Size(206, 82);
             this.panel1.TabIndex = 8;
             // 
+            // button9
+            // 
+            this.button9.Location = new System.Drawing.Point(115, 43);
+            this.button9.Name = "button9";
+            this.button9.Size = new System.Drawing.Size(75, 23);
+            this.button9.TabIndex = 3;
+            this.button9.Text = "button9";
+            this.coolTip.SetTipText(this.button9, "?Question tip");
+            this.button9.UseVisualStyleBackColor = true;
+            // 
+            // button8
+            // 
+            this.button8.Location = new System.Drawing.Point(115, 11);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(75, 23);
+            this.button8.TabIndex = 2;
+            this.button8.Text = "button8";
+            this.coolTip.SetTipText(this.button8, "!Warning tip");
+            this.button8.UseVisualStyleBackColor = true;
+            // 
+            // button7
+            // 
+            this.button7.Location = new System.Drawing.Point(18, 43);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(75, 23);
+            this.button7.TabIndex = 1;
+            this.button7.Text = "button7";
+            this.coolTip.SetTipText(this.button7, "i)Information tip");
+            this.button7.UseVisualStyleBackColor = true;
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.radioButton3);
@@ -306,11 +337,11 @@
             this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1});
             this.listView1.HideSelection = false;
-            listViewItem1.ToolTipText = "Some tooltip for Item1";
-            listViewItem2.ToolTipText = "Some tooltip for Item2";
+            listViewItem3.ToolTipText = "Some tooltip for Item1";
+            listViewItem4.ToolTipText = "Some tooltip for Item2";
             this.listView1.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1,
-            listViewItem2});
+            listViewItem3,
+            listViewItem4});
             this.listView1.Location = new System.Drawing.Point(609, 116);
             this.listView1.Name = "listView1";
             this.coolTip.SetShowItemTips(this.listView1, true);
@@ -318,46 +349,29 @@
             this.listView1.TabIndex = 11;
             this.listView1.UseCompatibleStateImageBehavior = false;
             // 
+            // bPresentation
+            // 
+            this.bPresentation.Location = new System.Drawing.Point(405, 41);
+            this.bPresentation.Name = "bPresentation";
+            this.bPresentation.Size = new System.Drawing.Size(111, 23);
+            this.bPresentation.TabIndex = 12;
+            this.bPresentation.Text = "Toggle presentation";
+            this.coolTip.SetTipText(this.bPresentation, "Start or stop presentation mode.");
+            this.bPresentation.UseVisualStyleBackColor = true;
+            this.bPresentation.Click += new System.EventHandler(this.bPresentation_Click);
+            // 
             // coolTip
             // 
             this.coolTip.BaseForm = this;
             this.coolTip.IconMarging = new System.Windows.Forms.Padding(2, 3, 2, 2);
             // 
-            // button7
-            // 
-            this.button7.Location = new System.Drawing.Point(18, 43);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(75, 23);
-            this.button7.TabIndex = 1;
-            this.button7.Text = "button7";
-            this.coolTip.SetTipText(this.button7, "i)Information tip");
-            this.button7.UseVisualStyleBackColor = true;
-            // 
-            // button8
-            // 
-            this.button8.Location = new System.Drawing.Point(115, 11);
-            this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(75, 23);
-            this.button8.TabIndex = 2;
-            this.button8.Text = "button8";
-            this.coolTip.SetTipText(this.button8, "!Warning tip");
-            this.button8.UseVisualStyleBackColor = true;
-            // 
-            // button9
-            // 
-            this.button9.Location = new System.Drawing.Point(115, 43);
-            this.button9.Name = "button9";
-            this.button9.Size = new System.Drawing.Size(75, 23);
-            this.button9.TabIndex = 3;
-            this.button9.Text = "button9";
-            this.coolTip.SetTipText(this.button9, "?Question tip");
-            this.button9.UseVisualStyleBackColor = true;
-            // 
             // TestForm
             // 
+            this.AcceptButton = this.bPresentation;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(884, 275);
+            this.Controls.Add(this.bPresentation);
             this.Controls.Add(this.listView1);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.groupBox1);
@@ -417,6 +431,7 @@
         private System.Windows.Forms.Button button8;
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Button bPresentation;
     }
 }
 

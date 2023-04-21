@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Design;
 using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Collections;
 
 namespace CoolTip
 {
@@ -629,6 +631,9 @@ namespace CoolTip
         {
             StopTimerShow();
             DoHide();
+#if DEBUG
+            HidePresentation();
+#endif
         }
 
         /// <summary>
@@ -656,24 +661,58 @@ namespace CoolTip
         }
 
         /// <summary>
-        /// Create and add generic manager with provided function.
+        /// Create and add generic manager with provided functors.
         /// </summary>
         /// <typeparam name="TComponent">Type of the specified component.</typeparam>
         /// <param name="getTip">Functor which returns tip text for specified target.</param>
         /// <param name="getBounds">Functor which returns bounds of the specified target.</param>
         /// <param name="getVisible">Functor which returns visibility of the specified target.</param>
-        public void AddInfo<TComponent>(
+        public void AddManager<TComponent>(
             Func<TComponent, string> getTip,
             Func<TComponent, Rectangle> getBounds,
             Func<TComponent, bool> getVisible)
             where TComponent : Component
         {
-            var info = new Manager<TComponent>();
-            info.Tip = getTip;
-            info.Bounds = getBounds;
-            info.Visible = getVisible;
-            _managers.Add(typeof(TComponent), info);
+            var manager = new Manager<TComponent>();
+            manager.Tip = getTip;
+            manager.Bounds = getBounds;
+            manager.Visible = getVisible;
+            _managers.Add(typeof(TComponent), manager);
         }
+
+#if DEBUG
+        /// <summary>
+        /// Create and add generic visitor with provided functors.
+        /// </summary>
+        /// <typeparam name="TComponent">Type of the specified component.</typeparam>
+        /// <param name="getChildAt">Functor which returns child item / sub-component by given location.</param>
+        /// <param name="getChildren">Functor which returns collection of the child items / sub-components.</param>
+        public void AddVisitor<TComponent>(
+            Func<TComponent, Point, object> getChildAt,
+            Func<TComponent, ICollection> getChildren)
+            where TComponent : Component
+        {
+            var visitor = new Visitor<TComponent>();
+            visitor.ChildAt = getChildAt;
+            visitor.Children = getChildren;
+            _visitors.Add(typeof(TComponent), visitor);
+        }
+#else
+        /// <summary>
+        /// Create and add generic visitor with provided functors.
+        /// </summary>
+        /// <typeparam name="TComponent">Type of the specified component.</typeparam>
+        /// <param name="getChildAt">Functor which returns child item / sub-component by given location.</param>
+        public void AddVisitor<TComponent>(
+            Func<TComponent, Point, object> getChildAt)
+            where TComponent : Component
+        {
+            var visitor = new Visitor<TComponent>();
+            visitor.ChildAt = getChildAt;
+            _visitors.Add(typeof(TComponent), visitor);
+        }
+#endif
+
 
         /// <summary>
         /// Get manager of the specified target component.
@@ -1345,5 +1384,72 @@ namespace CoolTip
                 _window.DefWndProc(ref msg);
             }
         }
+
+#if DEBUG
+        /// <summary>
+        /// Storage of all created tool tip windows.
+        /// </summary>
+        private HashSet<TipNativeWindow> _windows;
+
+        /// <summary>
+        /// Determine is presentation currently running.
+        /// </summary>
+        public bool IsPresentationRunning { get { return _windows != null; } }
+
+        /// <summary>
+        /// Create and show tool tip for all accessible
+        /// controls / components of the <seealso cref="BaseForm"/>.
+        /// </summary>
+        public void ShowPresentation()
+        {
+            _windows = new HashSet<TipNativeWindow>();
+            DoPresentation(_baseForm.Controls);
+        }
+
+        /// <summary>
+        /// Hide and destroy all tool tip window.
+        /// </summary>
+        public void HidePresentation()
+        {
+            if (_windows != null)
+            {
+                foreach (var window in _windows)
+                    window.DestroyHandle();
+                _windows = null;
+            }
+        }
+
+        /// <summary>
+        /// Recursively visit all given collection of the
+        /// controls / components and Create and show tool tip for all
+        /// accessible targets.
+        /// </summary>
+        /// <param name="collection">Collection of the controls / components.</param>
+        private void DoPresentation(ICollection collection)
+        {
+            foreach (object target in collection)
+            {
+                if (_visitors.Keys.Contains(target.GetType()))
+                {
+                    if ((target is ListBox) && !_listBoxes.Contains(target))
+                        break;
+
+                    if ((target is ListView) && !_listViews.Contains(target))
+                        break;
+
+                    var visitor = _visitors[target.GetType()];
+                    var items = visitor.GetItems(target);
+                    if (items != null)
+                        DoPresentation(items);
+                }
+                else
+                {
+                    DoShow(target);
+                    _windows.Add(_window);
+                    _window = new TipNativeWindow(this);
+                }
+            }
+        }
+#endif
     }
 }

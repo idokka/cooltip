@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
+using System.Collections;
+using System.Reflection;
+using System.Xml.Linq;
 
 namespace CoolTip
 {
@@ -19,6 +23,15 @@ namespace CoolTip
         /// <param name="location">Absolute screen mouse coordinates.</param>
         /// <returns>Found internal item / sub-component or `null`.</returns>
         object GetItem(object sender, Point location);
+
+#if DEBUG
+        /// <summary>
+        /// Return collection of the internal items.
+        /// </summary>
+        /// <param name="sender">Target component to observe.</param>
+        /// <returns>Collection of the internal items.</returns>
+        ICollection GetItems(object sender);
+#endif
     }
 
     /// <summary>
@@ -40,6 +53,21 @@ namespace CoolTip
             var target = container.GetChildAtPoint(location);
             return target;
         }
+
+#if DEBUG
+        /// <summary>
+        /// Return collection of the internal controls.
+        /// </summary>
+        /// <param name="sender">Target control to observe.</param>
+        /// <returns>Collection of the internal controls.</returns>
+        public ICollection GetItems(object sender)
+        {
+            if (sender is Control)
+                return (sender as Control).Controls;
+            else
+                return null;
+        }
+#endif
     }
 
     /// <summary>
@@ -60,6 +88,18 @@ namespace CoolTip
             var target = container.GetItemAt(location);
             return target;
         }
+
+#if DEBUG
+        /// <summary>
+        /// Return collection of the tool strip items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="ToolStrip"/> to observe.</param>
+        /// <returns>Collection of the tool strip items.</returns>
+        public ICollection GetItems(object sender)
+        {
+            return (sender as ToolStrip).Items;
+        }
+#endif
     }
 
     /// <summary>
@@ -80,6 +120,18 @@ namespace CoolTip
             var target = container.GetItemAt(location);
             return target;
         }
+
+#if DEBUG
+        /// <summary>
+        /// Return collection of the status strip items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="StatusStrip"/> to observe.</param>
+        /// <returns>Collection of the status strip items.</returns>
+        public ICollection GetItems(object sender)
+        {
+            return (sender as StatusStrip).Items;
+        }
+#endif
     }
 
     /// <summary>
@@ -110,6 +162,21 @@ namespace CoolTip
             else
                 return sender;
         }
+
+#if DEBUG
+        /// <summary>
+        /// Return collection of the list box items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="ListBox"/> to observe.</param>
+        /// <returns>Collection of the list box items.</returns>
+        public ICollection GetItems(object sender)
+        {
+            return (sender as ListBox).Items.Cast<object>()
+                .Where(item => item is IListBoxItem)
+                .Select(item => item as IListBoxItem)
+                .ToArray();
+        }
+#endif
     }
 
     /// <summary>
@@ -130,6 +197,18 @@ namespace CoolTip
             var item = container.GetItemAt(location.X, location.Y);
             return item ?? sender;
         }
+
+#if DEBUG
+        /// <summary>
+        /// Return collection of the list view items.
+        /// </summary>
+        /// <param name="sender">Target <seealso cref="ListView"/> to observe.</param>
+        /// <returns>Collection of the list view items.</returns>
+        public ICollection GetItems(object sender)
+        {
+            return (sender as ListView).Items;
+        }
+#endif
     }
 
     /// <summary>
@@ -147,15 +226,34 @@ namespace CoolTip
         public Func<TComponent, Point, object> ChildAt { get; set; }
 
         /// <summary>
-        /// Try to find any observable child items / sub-components.
+        /// Try to find any observable child item / sub-component by given location.
         /// </summary>
         /// <param name="sender">Target component to observe.</param>
         /// <param name="location">Absolute screen mouse coordinates.</param>
-        /// <returns></returns>
+        /// <returns>Found child item / sub-component.</returns>
         public object GetItem(object sender, Point location)
         {
             return ChildAt?.Invoke(sender as TComponent, location) ?? null;
         }
+
+#if DEBUG
+        /// <summary>
+        /// Functor to get collection of the child items / sub-components.
+        /// Receives component to discover.
+        /// Returns collection of the child items / sub-components.
+        /// </summary>
+        public Func<TComponent, ICollection> Children { get; set; }
+
+        /// <summary>
+        /// Return collection of the child items / sub-components.
+        /// </summary>
+        /// <param name="sender">Target component to observe.</param>
+        /// <returns>Collection of the child items / sub-components.</returns>
+        public ICollection GetItems(object sender)
+        {
+            return Children?.Invoke(sender as TComponent) ?? null;
+        }
+#endif
     }
 
 }
