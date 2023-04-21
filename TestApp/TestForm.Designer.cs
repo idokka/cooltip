@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TestForm));
             System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("Item1");
             System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("Item2");
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TestForm));
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
@@ -81,7 +81,7 @@
             // 
             this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.coolTip.SetHelpText(this.button2, "Help for button2 at top-right");
-            this.button2.Location = new System.Drawing.Point(797, 41);
+            this.button2.Location = new System.Drawing.Point(711, 41);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 1;
@@ -105,7 +105,7 @@
             // 
             this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.coolTip.SetHelpText(this.button4, "Help for button4 at bottom-right");
-            this.button4.Location = new System.Drawing.Point(797, 212);
+            this.button4.Location = new System.Drawing.Point(711, 212);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(75, 23);
             this.button4.TabIndex = 3;
@@ -132,7 +132,7 @@
             this.coolTip.SetHelpText(this.textBox1, "Just type text");
             this.textBox1.Location = new System.Drawing.Point(184, 76);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(594, 20);
+            this.textBox1.Size = new System.Drawing.Size(508, 20);
             this.textBox1.TabIndex = 5;
             this.coolTip.SetTipText(this.textBox1, "Tip shorter than control");
             // 
@@ -150,7 +150,7 @@
             // 
             this.radioButton1.AutoSize = true;
             this.radioButton1.Checked = true;
-            this.radioButton1.Location = new System.Drawing.Point(33, 19);
+            this.radioButton1.Location = new System.Drawing.Point(28, 19);
             this.radioButton1.Name = "radioButton1";
             this.radioButton1.Size = new System.Drawing.Size(76, 17);
             this.radioButton1.TabIndex = 0;
@@ -163,7 +163,7 @@
             // radioButton2
             // 
             this.radioButton2.AutoSize = true;
-            this.radioButton2.Location = new System.Drawing.Point(33, 42);
+            this.radioButton2.Location = new System.Drawing.Point(28, 42);
             this.radioButton2.Name = "radioButton2";
             this.radioButton2.Size = new System.Drawing.Size(57, 17);
             this.radioButton2.TabIndex = 1;
@@ -183,7 +183,7 @@
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
             this.toolStrip.ShowItemToolTips = false;
-            this.toolStrip.Size = new System.Drawing.Size(884, 25);
+            this.toolStrip.Size = new System.Drawing.Size(798, 25);
             this.toolStrip.TabIndex = 6;
             this.toolStrip.Text = "toolStrip1";
             // 
@@ -208,7 +208,6 @@
             // 
             // toolStripTextBox1
             // 
-            this.toolStripTextBox1.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolStripTextBox1.Name = "toolStripTextBox1";
             this.toolStripTextBox1.Size = new System.Drawing.Size(100, 25);
             this.toolStripTextBox1.ToolTipText = "Enter something into me!";
@@ -228,14 +227,14 @@
             this.toolStripStatusLabel2});
             this.statusStrip.Location = new System.Drawing.Point(0, 253);
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(884, 22);
+            this.statusStrip.Size = new System.Drawing.Size(798, 22);
             this.statusStrip.TabIndex = 7;
             this.statusStrip.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(806, 17);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(720, 17);
             this.toolStripStatusLabel1.Spring = true;
             this.toolStripStatusLabel1.Text = "Some tool strip status label";
             this.toolStripStatusLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -297,7 +296,7 @@
             this.groupBox1.Controls.Add(this.radioButton1);
             this.groupBox1.Location = new System.Drawing.Point(315, 116);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(150, 94);
+            this.groupBox1.Size = new System.Drawing.Size(125, 94);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "ListView style";
@@ -305,7 +304,7 @@
             // radioButton3
             // 
             this.radioButton3.AutoSize = true;
-            this.radioButton3.Location = new System.Drawing.Point(33, 65);
+            this.radioButton3.Location = new System.Drawing.Point(28, 65);
             this.radioButton3.Name = "radioButton3";
             this.radioButton3.Size = new System.Drawing.Size(41, 17);
             this.radioButton3.TabIndex = 2;
@@ -324,10 +323,10 @@
             "list box items",
             "also can have tips",
             "if they doesn\'t fit into the parent list box"});
-            this.listBox1.Location = new System.Drawing.Point(471, 116);
+            this.listBox1.Location = new System.Drawing.Point(446, 116);
             this.listBox1.Name = "listBox1";
             this.coolTip.SetShowLongItemTips(this.listBox1, true);
-            this.listBox1.Size = new System.Drawing.Size(132, 82);
+            this.listBox1.Size = new System.Drawing.Size(120, 82);
             this.listBox1.TabIndex = 10;
             this.coolTip.SetTipText(this.listBox1, "Tip for whole list box");
             // 
@@ -342,10 +341,10 @@
             this.listView1.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
             listViewItem3,
             listViewItem4});
-            this.listView1.Location = new System.Drawing.Point(609, 116);
+            this.listView1.Location = new System.Drawing.Point(572, 116);
             this.listView1.Name = "listView1";
             this.coolTip.SetShowItemTips(this.listView1, true);
-            this.listView1.Size = new System.Drawing.Size(151, 94);
+            this.listView1.Size = new System.Drawing.Size(120, 94);
             this.listView1.TabIndex = 11;
             this.listView1.UseCompatibleStateImageBehavior = false;
             // 
@@ -370,7 +369,7 @@
             this.AcceptButton = this.bPresentation;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(884, 275);
+            this.ClientSize = new System.Drawing.Size(798, 275);
             this.Controls.Add(this.bPresentation);
             this.Controls.Add(this.listView1);
             this.Controls.Add(this.listBox1);
