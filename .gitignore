@@ -351,3 +351,7 @@ MigrationBackup/
 
 # Exclude any executable.
 *.exe
+
+# NuGet user configuration
+nuget.config
+ 
