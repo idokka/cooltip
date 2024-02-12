@@ -46,8 +46,8 @@ You can show tip manually with needed text for any specific control / component 
 ## Credits
 
 Originally was written by me for *Delphi 7* in 2004-2007 years for own pet-projects.
-Source code you can find [here](https://gist.github.com/idokka/a76dc86e8b590bfc5fdb4c7b51ffae9a). Even *20 years ago* I had good skills to write *readable* code (except magic numbers :blush:).
-Of course it was adapted and a little bit redesigned :)
+Source code you can find [here](https://gist.github.com/idokka/a76dc86e8b590bfc5fdb4c7b51ffae9a).
+Of course it was adapted and a little bit redesigned :blush:
 More detailed history read in [the article in my blog](https://pimpl.dev/public/cooltip).
 
 ## Debugging
