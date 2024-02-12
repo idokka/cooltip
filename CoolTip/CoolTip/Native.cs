@@ -32,6 +32,10 @@ namespace CoolTip
         public static extern bool UpdateWindow(HandleRef hWnd);
 
         [DllImport("User32")]
+        public static extern bool RedrawWindow(HandleRef hWnd,
+            IntPtr lprcUpdate, IntPtr hrgnUpdate, uint flags);
+
+        [DllImport("User32")]
         public static extern IntPtr GetForegroundWindow();
 
         public static HandleRef HWND_TOPMOST = new HandleRef(null, new IntPtr(-1));
@@ -52,10 +56,13 @@ namespace CoolTip
         public const int WM_KEYDOWN = 0x0100;
 
         public const int SWP_NOACTIVATE = 0x0010;
+        public const int SWP_FRAMECHANGED = 0x0020;
         public const int SWP_NOOWNERZORDER = 0x0200;
 
         public const int SW_HIDE = 0;
         public const int SW_SHOWNOACTIVATE = 4;
+
+        public const int RDW_INVALIDATE = 0x0001;
 
         [StructLayout(LayoutKind.Sequential)]
         public struct PAINTSTRUCT

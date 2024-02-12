@@ -630,7 +630,7 @@ namespace CoolTip
         private void ResetHint(object sender, EventArgs e)
         {
             StopTimerShow();
-            DoHide();
+            DoHide(true);
 #if DEBUG
             HidePresentation();
 #endif
@@ -774,18 +774,20 @@ namespace CoolTip
         /// <returns>Always `False`.</returns>
         public bool PreFilterMessage(ref Message msg)
         {
-            if (_baseForm == null || _isDisposing || (_baseForm.Handle != Native.GetForegroundWindow()))
+            var foreground = Native.GetForegroundWindow();
+            if (_baseForm == null || _isDisposing || (_baseForm.Handle != foreground))
                 return false;
 
             if (msg.Msg == Native.WM_MOUSEMOVE)
             {
-                //Debug.WriteLine("{0} {1}", DateTime.Now, m);
-
                 var target = FindCurrentTarget();
+#if DEBUG
+                //Debug.WriteLine("{0} {1}", DateTime.Now, msg);
                 //Debug.WriteLine("target: {0}", target);
                 //Debug.WriteLine("current: {0}", _currentTarget);
                 //Debug.WriteLine("future: {0}", _futureTarget);
                 //Debug.WriteLine("last: {0}", _lastTarget);
+#endif
 
                 if ((target != null)
                     && !target.Equals(_futureTarget)
@@ -810,8 +812,6 @@ namespace CoolTip
                     if (!target.Equals(_currentTarget)
                         && (_currentTarget != null))
                     {
-                        // hide previous
-                        DoHide();
                         // show new without additional delay
                         DoShow(target);
                     }
@@ -825,13 +825,23 @@ namespace CoolTip
             }
             else if (msg.Msg == Native.WM_MOUSELEAVE)
             {
-                if (_manualTarget == null)
-                    DoHide();
+#if DEBUG
+                //Debug.WriteLine("{0} {1}", DateTime.Now, msg);
+#endif
+                var target = FindCurrentTarget();
+                if ((_manualTarget == null)
+                    && (_currentTarget != target)
+                    && (msg.HWnd != Handle)
+                    && (foreground != Handle)
+                    && !(_renderInfo?.Bounds.Size.IsEmpty ?? false))
+                {
+                    DoHide(true);
+                }
                 StopTimerShow();
             }
             else if (msg.Msg == Native.WM_KEYDOWN)
             {
-                DoHide();
+                DoHide(true);
                 StopTimerShow();
             }
 
@@ -984,11 +994,14 @@ namespace CoolTip
             if (!manager?.GetVisible(target) ?? false)
                 return;
 
-            DoHide();
-
             _manualTarget = target;
-            _renderInfo = new RenderTipInfo(icon, text, delay);
-            DoShow(target, manager);
+            var newRenderInfo = new RenderTipInfo(icon, text, delay);
+            newRenderInfo.Bounds = GetRenderBounds(newRenderInfo, target, manager);
+            bool isNeedToHide = newRenderInfo.IsNeedToHide(_renderInfo);
+
+            DoHide(isNeedToHide);
+            DoShow(newRenderInfo, target);
+
             HideByTimer(delay ?? HideDelay);
         }
 
@@ -1022,7 +1035,7 @@ namespace CoolTip
         public void Hide()
         {
             if (_manualTarget != null)
-                DoHide();
+                DoHide(true);
         }
 
         /// <summary>
@@ -1032,12 +1045,15 @@ namespace CoolTip
         /// <param name="e">Event arguments.</param>
         private void HelpRequested(object sender, HelpEventArgs e)
         {
-            DoHide();
-
             _manualTarget = sender;
             string text = _managerControl.GetHelp(sender);
-            _renderInfo = new RenderTipInfo(Icon.Information, text, 0);
-            DoShow(sender, _managerControl);
+            var newRenderInfo = new RenderTipInfo(Icon.Information, text, 0);
+            newRenderInfo.Bounds = GetRenderBounds(newRenderInfo, sender, _managerControl);
+            bool isNeedToHide = newRenderInfo.IsNeedToHide(_renderInfo);
+
+            DoHide(isNeedToHide);
+            DoShow(newRenderInfo, sender);
+
             e.Handled = true;
         }
 
@@ -1072,12 +1088,16 @@ namespace CoolTip
         /// <summary>
         /// Do hide current tip if any.
         /// </summary>
-        private void DoHide()
+        private void DoHide(bool hideWindow)
         {
             if (_currentTarget != null && !_isDisposing)
             {
-                var handle = new HandleRef(this, Handle);
-                Native.ShowWindow(handle, Native.SW_HIDE);
+                if (hideWindow)
+                {
+                    var handle = new HandleRef(this, Handle);
+                    Native.ShowWindow(handle, Native.SW_HIDE);
+                }
+
                 StopTimerHide();
                 if (_manualTarget == null)
                     _lastTarget = _currentTarget;
@@ -1123,7 +1143,7 @@ namespace CoolTip
         /// <param name="args">Event arguments.</param>
         private void TimerHideHandler(object source, EventArgs args)
         {
-            DoHide();
+            DoHide(true);
         }
 
         /// <summary>
@@ -1199,27 +1219,31 @@ namespace CoolTip
             if (String.IsNullOrWhiteSpace(hint))
                 return;
 
-            DoHide();
+            var newRenderInfo = new RenderTipInfo(hint);
+            newRenderInfo.Bounds = GetRenderBounds(newRenderInfo, target, manager);
+            bool isNeedToHide = newRenderInfo.IsNeedToHide(_renderInfo);
 
-            _renderInfo = new RenderTipInfo(hint);
-            DoShow(target, manager);
+            DoHide(isNeedToHide);
+            DoShow(newRenderInfo, target);
+
             HideByTimer(HideDelay);
         }
 
         /// <summary>
-        /// Process real tip show for specified target with specified tip manager.
+        /// Calculate bounds of the tool tip window.
+        /// General geometry.
         /// </summary>
-        /// <param name="target">Target for the tip.</param>
-        /// <param name="manager">Tip managet for the tip.</param>
-        private void DoShow(object target, IManager manager)
+        /// <param name="renderInfo">Render information.</param>
+        /// <param name="target">Tool tip window target object.</param>
+        /// <param name="manager">Tip manager for target object.</param>
+        /// <returns>Bounds of the tool tip window.</returns>
+        private Rectangle GetRenderBounds(RenderTipInfo renderInfo, object target, IManager manager)
         {
-            _currentTarget = target;
-
             // calculate general variables, like size, location, etc.
             var bounds = manager.GetBounds(target);
             var location = new Point(bounds.Left - Marging.Left, bounds.Bottom + Marging.Bottom);
             var border = new Padding(BorderWidth);
-            var size = GetTextRect(_renderInfo.Info.Text) + Padding.Size + border.Size;
+            var size = GetTextRect(renderInfo.Info.Text) + Padding.Size + border.Size;
             var screen = Screen.FromRectangle(bounds).Bounds;
             var window = _baseForm.Bounds;
 
@@ -1233,7 +1257,7 @@ namespace CoolTip
             if (isOutOfBottom)
             {
                 rect.Y = bounds.Top - size.Height - Marging.Top - border.Horizontal;
-                _renderInfo.MoveIconDown();
+                renderInfo.MoveIconDown();
             }
 
             // try to place tip inside base form: check right
@@ -1247,20 +1271,33 @@ namespace CoolTip
             if ((isOutOfRight && !isOutOfLeft && widtherThanWindow) || isOutOfScreen)
             {
                 rect.X = futureLeft;
-                _renderInfo.MoveIconRight();
+                renderInfo.MoveIconRight();
             }
             if (rect.Width * 2 < bounds.Width)
             {
-                _renderInfo.RedirectArrowRight();
+                renderInfo.RedirectArrowRight();
             }
+            return rect;
+        }
 
+        /// <summary>
+        /// Internal routine to show tool tip window.
+        /// </summary>
+        /// <param name="newRenderInfo">New render information.</param>
+        /// <param name="newTarget">New tool tip window target object.</param>
+        private void DoShow(RenderTipInfo newRenderInfo, object newTarget)
+        {
+            // override previous render info
+            _renderInfo = newRenderInfo;
+            _currentTarget = newTarget;
             // reposition and show tip window
+            var bounds = _renderInfo.Bounds;
             var handle = new HandleRef(this, Handle);
-            Native.SetWindowPos(handle,
-                Native.HWND_TOPMOST, rect.Left, rect.Top, rect.Width, rect.Height,
-                Native.SWP_NOACTIVATE | Native.SWP_NOOWNERZORDER);
+            Native.SetWindowPos(handle, Native.HWND_TOPMOST,
+                bounds.Left, bounds.Top, bounds.Width, bounds.Height,
+                Native.SWP_NOACTIVATE);
             Native.ShowWindow(handle, Native.SW_SHOWNOACTIVATE);
-            Native.UpdateWindow(handle);
+            Native.RedrawWindow(handle, IntPtr.Zero, IntPtr.Zero, Native.RDW_INVALIDATE);
             StopTimerShow();
         }
 
