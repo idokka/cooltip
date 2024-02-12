@@ -1155,13 +1155,21 @@ namespace CoolTip
         {
             if (_timerShow == null)
             {
-                _futureTarget = target;
-                _timerShow = new TipTimer(target);
-                _timerShow.Tick += TimerShowHandler;
-                _timerShow.Interval = interval;
-                _timerShow.Start();
+                GetManager(target)?.GetShowInterval(target, ref interval);
+                if (interval == 0)
+                {
+                    DoShow(target);
+                }
+                else
+                {
+                    _futureTarget = target;
+                    _timerShow = new TipTimer(target);
+                    _timerShow.Tick += TimerShowHandler;
+                    _timerShow.Interval = interval;
+                    _timerShow.Start();
+                }
 #if DEBUG
-                Debug.WriteLine("{0}\tshow timer start for {1}", DateTime.Now, _futureTarget);
+                //Debug.WriteLine("{0}\tshow timer start for {1}", DateTime.Now, _futureTarget);
 #endif
             }
         }
@@ -1174,7 +1182,7 @@ namespace CoolTip
             if (_timerShow != null)
             {
 #if DEBUG
-                Debug.WriteLine("{0}\tshow timer stop for {1}", DateTime.Now, _futureTarget);
+                //Debug.WriteLine("{0}\tshow timer stop for {1}", DateTime.Now, _futureTarget);
 #endif
                 _timerShow.Stop();
                 _timerShow.Dispose();
