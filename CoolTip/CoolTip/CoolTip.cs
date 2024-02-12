@@ -1357,7 +1357,6 @@ namespace CoolTip
                     {
                         Native.PAINTSTRUCT lpPaint = default;
                         IntPtr hdc = Native.BeginPaint(new HandleRef(this, msg.HWnd), ref lpPaint);
-                        Graphics graphics = Graphics.FromHdc(hdc);
                         try
                         {
                             Rectangle bounds = new Rectangle(
@@ -1367,11 +1366,18 @@ namespace CoolTip
                             if (bounds == Rectangle.Empty)
                                 break;
 
-                            Draw(graphics, bounds, _renderInfo);
+                            // double buffered rendering
+                            using (var graphics = Graphics.FromHdc(hdc))
+                            {
+                                using (var buffer = BufferedGraphicsManager.Current.Allocate(graphics, bounds))
+                                {
+                                    Draw(buffer.Graphics, bounds, _renderInfo);
+                                    buffer.Render(graphics);
+                                }
+                            }
                         }
                         finally
                         {
-                            graphics.Dispose();
                             Native.EndPaint(new HandleRef(this, msg.HWnd), ref lpPaint);
                         }
                     }
