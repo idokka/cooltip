@@ -68,6 +68,11 @@ namespace CoolTip
         public TipInfo Info { get; }
 
         /// <summary>
+        /// Tool tip window bounds in the screen coordinates.
+        /// </summary>
+        public Rectangle Bounds { get; set; }
+
+        /// <summary>
         /// Horizontal position of the tool tip window related to it's target.
         /// </summary>
         public PositionHorizontal Horizontal { get; set; }
@@ -219,6 +224,25 @@ namespace CoolTip
             Direction = (Direction == ArrowDirection.Up)
                 ? ArrowDirection.UpRight
                 : ArrowDirection.DownRight;
+        }
+
+        /// <summary>
+        /// Determines if it not needed to hide tool tip window
+        /// to reshow it in the nearest location, but only move it.
+        /// </summary>
+        /// <param name="other">The other render information.</param>
+        /// <param name="threshold">Intersection threshold to hide-and-show instead of moving.</param>
+        /// <returns></returns>
+        public bool IsNeedToHide(RenderTipInfo other, int threshold = 25)
+        {
+            if ((other != null) && Bounds.IntersectsWith(other.Bounds))
+            {
+                var intersecion = Rectangle.Intersect(Bounds, other.Bounds);
+                var percentage = (intersecion.Width * intersecion.Height) * 100 / (Bounds.Width * Bounds.Height);
+                return percentage < threshold;
+            }
+            else
+                return true;
         }
     }
 

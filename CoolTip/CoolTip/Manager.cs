@@ -32,12 +32,37 @@ namespace CoolTip
         /// <param name="target">Target component.</param>
         /// <returns>Visibility of the specified target component.</returns>
         bool GetVisible(object target);
+
+        /// <summary>
+        /// Determine delay between mouse hover and tool tip window show.
+        /// <seealso cref="CoolTip.ShowDelay"/>
+        /// </summary>
+        /// <param name="target">Target component.</param>
+        /// <param name="showDelay">Show delay in milliseconds.</param>
+        void GetShowInterval(object target, ref int showDelay);
+    }
+
+    /// <summary>
+    /// Base abstract classs for tip manager.
+    /// </summary>
+    public abstract class BaseManager
+    {
+        /// <summary>
+        /// Determine delay between mouse hover and tool tip window show.
+        /// <seealso cref="CoolTip.ShowDelay"/>
+        /// </summary>
+        /// <param name="target">Target component.</param>
+        /// <param name="showDelay">Show delay in milliseconds.</param>
+        public virtual void GetShowInterval(object target, ref int showDelay)
+        {
+            // no changes for show delay.
+        }
     }
 
     /// <summary>
     /// Manages tool tip texts and help texts for <seealso cref="Control"/> derives.
     /// </summary>
-    public class ManagerControl : IManager
+    public class ManagerControl : BaseManager, IManager
     {
         /// <summary>
         /// Tip texts by control.
@@ -163,7 +188,7 @@ namespace CoolTip
     /// Use built-in `Visible` property.
     /// Determine item bounds with help of it's `Owner` property.
     /// </summary>
-    public class ManagerToolStripItem : IManager
+    public class ManagerToolStripItem : BaseManager, IManager
     {
         /// <summary>
         /// Determine specified tool strip item tip text.
@@ -208,7 +233,7 @@ namespace CoolTip
     /// Calculates item position with help of `ListBox.ItemHeight` property.
     /// Visibility means "is item text out of parent bounds".
     /// </summary>
-    public class ManagerListBoxItem : IManager
+    public class ManagerListBoxItem : BaseManager, IManager
     {
         /// <summary>
         /// Determine specified list box item tip text.
@@ -257,7 +282,7 @@ namespace CoolTip
     /// Suppose that item is visible if there's needed to show a tip for it.
     /// Request item bounds directly from it's parent.
     /// </summary>
-    public class ManagerListViewItem : IManager
+    public class ManagerListViewItem : BaseManager, IManager
     {
         /// <summary>
         /// Determine specified list view item tip text.
@@ -299,7 +324,7 @@ namespace CoolTip
     /// Generic tip manager for any <seealso cref="Component"/> derive.
     /// </summary>
     /// <typeparam name="TComponent">Real type of the target component.</typeparam>
-    public class Manager<TComponent> : IManager
+    public class Manager<TComponent> : BaseManager, IManager
         where TComponent : Component
     {
         /// <summary>
